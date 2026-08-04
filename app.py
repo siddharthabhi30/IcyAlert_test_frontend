@@ -41,7 +41,7 @@ if st.button("Fetch & Analyze from Backend"):
 if st.session_state.get('active', False):
     with st.spinner("Calling Backend API... (Calculating Ensemble Spread)"):
         try:
-            res = requests.post("http://localhost:8000/analyze", json={
+            res = requests.post("https://icyalert-test-backend.onrender.com/analyze", json={
                 "auth_token": st.session_state.app_token,
                 "variable": target_var,
                 "year": init_year,
@@ -51,7 +51,12 @@ if st.session_state.get('active', False):
             })
             
             if res.status_code != 200:
-                st.error(f"Backend Error: {res.json().get('detail', 'Unknown error')}")
+                try:
+                    error_msg = res.json().get('detail', 'Unknown error')
+                except ValueError:
+                    # If Render returns an HTML error page (like 502 Bad Gateway)
+                    error_msg = f"Server returned {res.status_code}: {res.text[:100]}"
+                st.error(f"Backend Error: {error_msg}")
                 st.stop()
                 
             data = res.json()
