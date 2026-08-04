@@ -9,6 +9,10 @@ st.set_page_config(page_title="IcyAlert: Frontend Dashboard", layout="wide")
 st.title("🧊 IcyAlert: Decoupled Architecture Frontend")
 
 with st.sidebar:
+    st.header("🔑 Authentication")
+    app_token = st.text_input("App Token", type="password", placeholder="Enter secret token")
+    
+    st.markdown("---")
     st.header("Data Parameters")
     target_var = st.selectbox("State Variable", [
         "sea_ice_cover", 
@@ -28,12 +32,17 @@ with st.sidebar:
     selected_lon = st.slider("Longitude", min_value=0.0, max_value=359.0, value=0.0, step=0.5)
 
 if st.button("Fetch & Analyze from Backend"):
+    if not app_token:
+        st.error("Please provide the App Token to access the Backend API.")
+        st.stop()
     st.session_state.active = True
+    st.session_state.app_token = app_token
 
 if st.session_state.get('active', False):
     with st.spinner("Calling Backend API... (Calculating Ensemble Spread)"):
         try:
             res = requests.post("http://localhost:8000/analyze", json={
+                "auth_token": st.session_state.app_token,
                 "variable": target_var,
                 "year": init_year,
                 "month": init_month,
