@@ -9,11 +9,6 @@ st.set_page_config(page_title="IcyAlert: Frontend Dashboard", layout="wide")
 st.title("🧊 IcyAlert: Decoupled Architecture Frontend")
 
 with st.sidebar:
-    st.header("🔑 Authentication (Token)")
-    cds_url = st.text_input("CDS API URL", value="https://cds.climate.copernicus.eu/api")
-    cds_key = st.text_input("CDS API Key", type="password", placeholder="UID:API_KEY")
-    
-    st.markdown("---")
     st.header("Data Parameters")
     target_var = st.selectbox("State Variable", [
         "sea_ice_cover", 
@@ -33,15 +28,12 @@ with st.sidebar:
     selected_lon = st.slider("Longitude", min_value=0.0, max_value=359.0, value=0.0, step=0.5)
 
 if st.button("Fetch & Analyze from Backend"):
-    if not cds_key:
-        st.error("Please provide your CDS API Key in the sidebar.")
-        st.stop()
-        
-    with st.spinner("Calling Backend API..."):
+    st.session_state.active = True
+
+if st.session_state.get('active', False):
+    with st.spinner("Calling Backend API... (Calculating Ensemble Spread)"):
         try:
             res = requests.post("http://localhost:8000/analyze", json={
-                "cds_url": cds_url,
-                "cds_key": cds_key,
                 "variable": target_var,
                 "year": init_year,
                 "month": init_month,
