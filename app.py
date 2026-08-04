@@ -10,7 +10,7 @@ st.title("🧊 IcyAlert: Decoupled Architecture Frontend")
 
 with st.sidebar:
     st.header("🔑 Authentication (Token)")
-    cds_url = st.text_input("CDS API URL", value="https://cds.climate.copernicus.eu/api/v2")
+    cds_url = st.text_input("CDS API URL", value="https://cds.climate.copernicus.eu/api")
     cds_key = st.text_input("CDS API Key", type="password", placeholder="UID:API_KEY")
     
     st.markdown("---")
