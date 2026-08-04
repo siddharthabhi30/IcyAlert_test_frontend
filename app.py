@@ -23,7 +23,7 @@ with st.sidebar:
         "10m_u_component_of_wind",
         "10m_v_component_of_wind"
     ])
-    init_year = st.selectbox("Year", ["2015", "2016", "2017", "2018", "2019", "2020"], index=5)
+    init_year = st.selectbox("Year", ["2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"], index=9)
     init_month = st.selectbox("Month", ["01", "03", "06", "09", "12"], index=3)
     
     st.markdown("---")
