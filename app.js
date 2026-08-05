@@ -24,6 +24,34 @@ document.addEventListener("DOMContentLoaded", () => {
     latSlider.addEventListener("input", (e) => latVal.textContent = parseFloat(e.target.value).toFixed(1));
     lonSlider.addEventListener("input", (e) => lonVal.textContent = parseFloat(e.target.value).toFixed(1));
 
+    // Auto-load mock data on startup so it looks pretty instantly
+    async function loadInitialMockData() {
+        try {
+            const response = await fetch("mock_2m_temperature_2020_09.json");
+            const data = await response.json();
+            renderDashboard(data);
+        } catch (e) {
+            console.error("Failed to load initial mock data:", e);
+        }
+    }
+    
+    // Call immediately
+    loadInitialMockData();
+
+    // Helper to render the dashboard
+    function renderDashboard(data) {
+        mapImage.src = `data:image/png;base64,${data.image_b64}`;
+        mapImage.style.display = "block";
+        mapPlaceholder.style.display = "none";
+
+        metricMean.textContent = data.metrics.mean.toFixed(4);
+        metricObs.textContent = data.metrics.obs.toFixed(4);
+        metricError.textContent = data.metrics.error.toFixed(4);
+        metricSpread.textContent = `±${data.metrics.std.toFixed(4)}`;
+
+        drawChart(data.ensembles, data.metrics.mean, data.metrics.obs, data.metrics.std);
+    }
+
     // Handle Fetch Button
     fetchBtn.addEventListener("click", async () => {
         const token = appToken.value;
@@ -34,7 +62,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Get active backend URL
         const backendMode = document.querySelector('input[name="backend_mode"]:checked').value;
-        const url = `${backendMode}/analyze`;
 
         // Build Payload
         const payload = {
@@ -46,15 +73,29 @@ document.addEventListener("DOMContentLoaded", () => {
             lon: parseFloat(lonSlider.value)
         };
 
-        showStatus("Calling Backend API... (This may take up to 5 minutes)", "");
+        const url = `${backendMode}/analyze`;
+        const mockFilename = `mock_${payload.variable}_${payload.year}_${payload.month}.json`;
+        
         fetchBtn.disabled = true;
 
         try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+            // 1. Try to load local mock data first
+            showStatus("Checking local cache...", "");
+            const mockRes = await fetch(mockFilename);
+            let response;
+            
+            if (mockRes.ok) {
+                showStatus("Local file found! Loading instantly...", "");
+                response = mockRes;
+            } else {
+                // 2. If not found locally, call backend
+                showStatus("No local cache found. Calling Backend API... (This may take up to 5 minutes)", "");
+                response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            }
 
             if (!response.ok) {
                 let errorText = "";
@@ -69,21 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const data = await response.json();
-            
-            // 1. Update Map
-            mapImage.src = `data:image/png;base64,${data.image_b64}`;
-            mapImage.style.display = "block";
-            mapPlaceholder.style.display = "none";
-
-            // 2. Update Metrics
-            metricMean.textContent = data.metrics.mean.toFixed(4);
-            metricObs.textContent = data.metrics.obs.toFixed(4);
-            metricError.textContent = data.metrics.error.toFixed(4);
-            metricSpread.textContent = `±${data.metrics.std.toFixed(4)}`;
-
-            // 3. Draw Chart
-            drawChart(data.ensembles, data.metrics.mean, data.metrics.obs, data.metrics.std);
-
+            renderDashboard(data);
             showStatus("Analysis Complete!", "success");
 
         } catch (error) {
@@ -127,31 +154,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         backgroundColor: '#ef4444',
                         pointRadius: 10,
                         pointStyle: 'rect'
+                    },
+                    {
+                        label: 'True Observation',
+                        data: [{ x: obs, y: 0 }],
+                        backgroundColor: '#10b981',
+                        pointRadius: 12,
+                        pointStyle: 'triangle',
+                        rotation: 180
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    annotation: {
-                        annotations: {
-                            obsLine: {
-                                type: 'line',
-                                xMin: obs,
-                                xMax: obs,
-                                borderColor: 'white',
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                                label: {
-                                    content: 'True Observation',
-                                    display: true,
-                                    position: 'start'
-                                }
-                            }
-                        }
-                    }
-                },
                 scales: {
                     y: {
                         display: false,

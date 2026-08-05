@@ -16,7 +16,7 @@
             
             <div class="control-group">
                 <h3>🔑 Authentication</h3>
-                <input type="password" id="app_token" placeholder="Enter secret token (e.g., loki)">
+                <input type="password" id="app_token" placeholder="Enter secure App Token">
             </div>
 
             <div class="control-group">
@@ -33,10 +33,18 @@
 
             <div class="control-group">
                 <h3>📊 Data Parameters</h3>
+                
+                <label>Data Frequency:</label>
+                <select id="data_freq" disabled title="Currently restricted to Monthly Mean to save bandwidth.">
+                    <option value="monthly" selected>Monthly Mean</option>
+                    <option value="daily">Daily (Requires S3 Backend)</option>
+                    <option value="hourly">Hourly (Requires S3 Backend)</option>
+                </select>
+
                 <label>State Variable:</label>
                 <select id="target_var">
                     <option value="sea_ice_cover">Sea Ice Cover</option>
-                    <option value="2m_temperature">2m Temperature</option>
+                    <option value="2m_temperature" selected>2m Temperature</option>
                     <option value="sea_surface_temperature">Sea Surface Temperature</option>
                     <option value="mean_sea_level_pressure">Mean Sea Level Pressure</option>
                     <option value="total_precipitation">Total Precipitation</option>
