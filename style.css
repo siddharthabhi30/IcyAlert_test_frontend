@@ -170,6 +170,63 @@ input[type="range"] {
     margin: -0.75rem 0 1.25rem;
 }
 
+.data-sources {
+    margin: 0;
+}
+
+.source-explanation {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: -0.75rem 0 1rem;
+}
+
+.source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.source-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.source-card:hover {
+    border-color: var(--accent-primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.source-role {
+    color: #60a5fa;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.source-card strong {
+    font-size: 0.9rem;
+}
+
+.source-card small {
+    color: var(--text-secondary);
+    line-height: 1.35;
+}
+
+@media (max-width: 1000px) {
+    .source-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .img-container {
     width: 100%;
     background: rgba(15, 23, 42, 0.5);

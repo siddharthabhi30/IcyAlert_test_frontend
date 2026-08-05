@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IcyAlert Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -43,13 +43,7 @@
 
                 <label>State Variable:</label>
                 <select id="target_var">
-                    <option value="sea_ice_cover">Sea Ice Cover</option>
                     <option value="2m_temperature" selected>2m Temperature</option>
-                    <option value="sea_surface_temperature">Sea Surface Temperature</option>
-                    <option value="mean_sea_level_pressure">Mean Sea Level Pressure</option>
-                    <option value="total_precipitation">Total Precipitation</option>
-                    <option value="10m_u_component_of_wind">10m U Wind Component</option>
-                    <option value="10m_v_component_of_wind">10m V Wind Component</option>
                 </select>
 
                 <label>Year:</label>
@@ -79,10 +73,10 @@
             <div class="control-group">
                 <h3>📍 Interactive Pixel Selector</h3>
                 <label>Latitude: <span id="lat_val">75.0</span></label>
-                <input type="range" id="selected_lat" min="-90" max="90" step="0.5" value="75">
+                <input type="range" id="selected_lat" min="50" max="90" step="0.5" value="75">
                 
                 <label>Longitude: <span id="lon_val">0.0</span></label>
-                <input type="range" id="selected_lon" min="0" max="359" step="0.5" value="0">
+                <input type="range" id="selected_lon" min="-180" max="180" step="0.5" value="0">
             </div>
 
             <button id="fetch_btn" class="primary-btn">Fetch & Analyze</button>
@@ -100,13 +94,13 @@
                 <div class="card map-card">
                     <h3>🗺️ Seasonal Forecast, ERA5 Reanalysis and Error Map</h3>
                     <p class="map-explanation">
-                        C3S is the seasonal ensemble forecast (process model). ERA5 is a reanalysis product (model + assimilated observations, not raw observations).
-                        Error is the C3S ensemble mean minus ERA5 reanalysis.
+                        C3S is the process-model forecast. ERA5 is the complete assimilated analysis. The map error is C3S minus ERA5.
+                        The pixel analysis below additionally shows the nearest real measured land-station observation.
                     </p>
                     <div class="img-container">
                         <img id="map_image" src="" style="display: none;" alt="Spatial Map">
                         <div id="map_placeholder" class="placeholder">
-                            <p>Loading the complete real September 2020 C3S and ERA5 grids…</p>
+                            <p>Loading C3S, ERA5, and measured station observations for September 2020…</p>
                         </div>
                     </div>
                 </div>
@@ -121,11 +115,19 @@
                         </div>
                         <div class="metric-box">
                             <p class="label">ERA5 Reanalysis</p>
+                            <h2 id="metric_reanalysis">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Forecast − ERA5 Error</p>
+                            <h2 id="metric_error">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Nearest Station Observation</p>
                             <h2 id="metric_obs">--</h2>
                         </div>
                         <div class="metric-box">
-                            <p class="label">Forecast − Reanalysis Error</p>
-                            <h2 id="metric_error">--</h2>
+                            <p class="label">Forecast − Station Error</p>
+                            <h2 id="metric_observation_error">--</h2>
                         </div>
                         <div class="metric-box">
                             <p class="label">Ensemble Spread</p>
@@ -137,9 +139,33 @@
                         <canvas id="ensembleChart"></canvas>
                     </div>
                 </div>
+
+                <section class="card data-sources" aria-label="Dataset provenance">
+                    <h3>🔗 Dataset provenance</h3>
+                    <p class="source-explanation">
+                        The three maps above use only C3S and ERA5. The measured station dataset is used separately in Pixel Analysis for the nearest-station value and forecast–station error.
+                    </p>
+                    <div class="source-grid">
+                        <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/seasonal-monthly-single-levels?tab=overview" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Used in maps and pixel analysis</span>
+                            <strong>C3S Seasonal Forecasts</strong>
+                            <small>Process-model forecast · ECMWF System 51 · 51-member monthly ensemble</small>
+                        </a>
+                        <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Used in maps and pixel analysis</span>
+                            <strong>ERA5 Monthly Reanalysis</strong>
+                            <small>Assimilated analysis · complete grid from model + observations</small>
+                        </a>
+                        <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/insitu-observations-surface-land?tab=overview" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Used only in pixel analysis</span>
+                            <strong>CDS Surface-Land Stations</strong>
+                            <small>Measured observation · quality-passed monthly station air temperature</small>
+                        </a>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
-    <script src="app.js"></script>
+    <script src="app.js?v=5"></script>
 </body>
 </html>

@@ -9,16 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const latVal = document.getElementById("lat_val");
     const lonVal = document.getElementById("lon_val");
     const metricMean = document.getElementById("metric_mean");
+    const metricReanalysis = document.getElementById("metric_reanalysis");
     const metricObs = document.getElementById("metric_obs");
     const metricError = document.getElementById("metric_error");
+    const metricObservationError = document.getElementById("metric_observation_error");
     const metricSpread = document.getElementById("metric_spread");
 
     const LOCAL_DATASETS = Object.freeze({
-        "2m_temperature|2020|09": "data/monthly_2m_temperature_2020_09.json"
+        "2m_temperature|2020|09": "data/monthly_2m_temperature_2020_09.json?v=3"
     });
-
-    // Promise caching prevents duplicate downloads while a dataset is still loading.
-    const monthlyGridCache = new Map();
+    const monthlyCache = new Map();
     const backendResponseCache = new Map();
     let chartInstance = null;
     let activeRequest = 0;
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function setLoading(isLoading) {
         fetchBtn.disabled = isLoading;
         fetchBtn.setAttribute("aria-busy", String(isLoading));
-        fetchBtn.textContent = isLoading ? "Loading real monthly data…" : "Fetch & Analyze";
+        fetchBtn.textContent = isLoading ? "Loading real observations…" : "Fetch & Analyze";
     }
 
     function showStatus(message, type = "") {
@@ -69,8 +69,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return new Float32Array(buffer);
     }
 
-    async function loadMonthlyGrid(metadataUrl) {
-        if (monthlyGridCache.has(metadataUrl)) return monthlyGridCache.get(metadataUrl);
+    async function loadMonthlyData(metadataUrl) {
+        if (monthlyCache.has(metadataUrl)) return monthlyCache.get(metadataUrl);
 
         const promise = (async () => {
             const metadataResponse = await fetch(metadataUrl, { cache: "force-cache" });
@@ -78,19 +78,22 @@ document.addEventListener("DOMContentLoaded", () => {
             const metadata = await metadataResponse.json();
             const baseUrl = new URL(".", new URL(metadataUrl, window.location.href));
             const [members, latCount, lonCount] = metadata.forecast.shape;
-            const forecastLength = members * latCount * lonCount;
-            const referenceLength = latCount * lonCount;
-            const [forecast, reference] = await Promise.all([
-                fetchFloat32(new URL(metadata.forecast.file, baseUrl), forecastLength),
-                fetchFloat32(new URL(metadata.reference.file, baseUrl), referenceLength)
+            const [forecast, reanalysis, observationPayload] = await Promise.all([
+                fetchFloat32(new URL(metadata.forecast.file, baseUrl), members * latCount * lonCount),
+                fetchFloat32(new URL(metadata.reanalysis.file, baseUrl), latCount * lonCount),
+                fetch(new URL(metadata.observations.file, baseUrl), { cache: "force-cache" }).then(response => {
+                    if (!response.ok) throw new Error(`Station observations returned HTTP ${response.status}`);
+                    return response.json();
+                })
             ]);
 
-            const mean = new Float32Array(referenceLength);
-            for (let cell = 0; cell < referenceLength; cell += 1) {
+            const cellCount = latCount * lonCount;
+            const mean = new Float32Array(cellCount);
+            for (let cell = 0; cell < cellCount; cell += 1) {
                 let sum = 0;
                 let count = 0;
                 for (let member = 0; member < members; member += 1) {
-                    const value = forecast[member * referenceLength + cell];
+                    const value = forecast[member * cellCount + cell];
                     if (Number.isFinite(value)) {
                         sum += value;
                         count += 1;
@@ -98,14 +101,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 mean[cell] = count ? sum / count : NaN;
             }
-            return { metadata, forecast, reference, mean, members, latCount, lonCount };
+
+            return {
+                metadata,
+                forecast,
+                reanalysis,
+                mean,
+                stations: observationPayload.rows,
+                members,
+                latCount,
+                lonCount
+            };
         })();
 
-        monthlyGridCache.set(metadataUrl, promise);
+        monthlyCache.set(metadataUrl, promise);
         try {
             return await promise;
         } catch (error) {
-            monthlyGridCache.delete(metadataUrl);
+            monthlyCache.delete(metadataUrl);
             throw error;
         }
     }
@@ -123,27 +136,59 @@ document.addEventListener("DOMContentLoaded", () => {
         return bestIndex;
     }
 
-    function localPoint(dataset, payload) {
-        const longitude = ((payload.lon % 360) + 360) % 360;
-        const latIndex = nearestIndex(dataset.metadata.latitudes, payload.lat);
-        const lonIndex = nearestIndex(dataset.metadata.longitudes, longitude);
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        const radians = degrees => degrees * Math.PI / 180;
+        const deltaLat = radians(lat2 - lat1);
+        const deltaLon = radians(((lon2 - lon1 + 180) % 360) - 180);
+        const a = Math.sin(deltaLat / 2) ** 2
+            + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(deltaLon / 2) ** 2;
+        return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function stationForecastPoint(dataset, station) {
+        const stationLat = station[2];
+        const stationLon = ((station[3] % 360) + 360) % 360;
+        const latIndex = nearestIndex(dataset.metadata.latitudes, stationLat);
+        const lonIndex = nearestIndex(dataset.metadata.longitudes, stationLon);
         const cell = latIndex * dataset.lonCount + lonIndex;
+        return { latIndex, lonIndex, cell, mean: dataset.mean[cell] };
+    }
+
+    function localPoint(dataset, payload) {
+        let station = dataset.stations[0];
+        let stationDistance = Infinity;
+        dataset.stations.forEach(candidate => {
+            const distance = haversineKm(payload.lat, payload.lon, candidate[2], candidate[3]);
+            if (distance < stationDistance) {
+                station = candidate;
+                stationDistance = distance;
+            }
+        });
+
+        const grid = stationForecastPoint(dataset, station);
         const cellCount = dataset.latCount * dataset.lonCount;
         const ensembles = [];
         for (let member = 0; member < dataset.members; member += 1) {
-            ensembles.push(dataset.forecast[member * cellCount + cell]);
+            ensembles.push(dataset.forecast[member * cellCount + grid.cell]);
         }
-        const mean = dataset.mean[cell];
-        const obs = dataset.reference[cell];
         const finite = ensembles.filter(Number.isFinite);
-        const variance = finite.reduce((sum, value) => sum + (value - mean) ** 2, 0) / finite.length;
+        const variance = finite.reduce((sum, value) => sum + (value - grid.mean) ** 2, 0) / finite.length;
+        const observation = station[4];
+        const reanalysis = dataset.reanalysis[grid.cell];
         return {
             ensembles,
-            metrics: { mean, obs, error: mean - obs, std: Math.sqrt(variance) },
-            latIndex,
-            lonIndex,
-            matchedLat: dataset.metadata.latitudes[latIndex],
-            matchedLon: dataset.metadata.longitudes[lonIndex]
+            metrics: {
+                mean: grid.mean,
+                reanalysis,
+                obs: observation,
+                error: grid.mean - reanalysis,
+                observation_error: grid.mean - observation,
+                std: Math.sqrt(variance)
+            },
+            latIndex: grid.latIndex,
+            lonIndex: grid.lonIndex,
+            station,
+            stationDistance
         };
     }
 
@@ -155,13 +200,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             if (localUrl) {
-                showStatus("Loading the bundled C3S forecast and ERA5 reanalysis grids…");
-                const dataset = await loadMonthlyGrid(localUrl);
+                showStatus("Loading the bundled C3S forecast and measured station temperatures…");
+                const dataset = await loadMonthlyData(localUrl);
                 if (requestId !== activeRequest) return;
                 const point = localPoint(dataset, payload);
                 renderLocalDashboard(dataset, point);
+                const stationName = point.station[1] || point.station[0];
                 showStatus(
-                    `Local real-data cache · nearest grid cell ${point.matchedLat.toFixed(1)}°N, ${point.matchedLon.toFixed(1)}°E`,
+                    `${stationName} · ${point.station[2].toFixed(3)}°, ${point.station[3].toFixed(3)}° · ${point.stationDistance.toFixed(0)} km from requested point`,
                     "success"
                 );
                 return;
@@ -180,21 +226,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-            if (!response.ok) {
-                let detail = `Backend returned HTTP ${response.status}`;
-                try {
-                    const errorPayload = await response.json();
-                    detail = errorPayload.detail || detail;
-                } catch (_) {
-                    // Keep the HTTP error if the backend did not return JSON.
-                }
-                throw new Error(detail);
-            }
+            if (!response.ok) throw new Error(`Backend returned HTTP ${response.status}`);
             const data = await response.json();
             if (requestId !== activeRequest) return;
             backendResponseCache.set(key, data);
             renderBackendDashboard(data);
-            showStatus("Analysis complete using backend data.", "success");
+            const station = data.observation;
+            showStatus(
+                `${station.station_name || station.station_id} · ${station.distance_from_requested_km.toFixed(0)} km from requested point`,
+                "success"
+            );
         } catch (error) {
             if (requestId === activeRequest) showStatus(error.message, "error");
         } finally {
@@ -204,10 +245,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderMetricsAndChart(point) {
         metricMean.textContent = point.metrics.mean.toFixed(4);
+        metricReanalysis.textContent = point.metrics.reanalysis.toFixed(4);
         metricObs.textContent = point.metrics.obs.toFixed(4);
         metricError.textContent = point.metrics.error.toFixed(4);
+        metricObservationError.textContent = point.metrics.observation_error.toFixed(4);
         metricSpread.textContent = `±${point.metrics.std.toFixed(4)}`;
-        drawChart(point.ensembles, point.metrics.mean, point.metrics.obs);
+        drawChart(point.ensembles, point.metrics.mean, point.metrics.reanalysis, point.metrics.obs);
     }
 
     function renderLocalDashboard(dataset, point) {
@@ -237,18 +280,19 @@ document.addEventListener("DOMContentLoaded", () => {
             : [[49, 54, 149], [255, 255, 191], [165, 0, 38]];
         const section = scaled < 0.5 ? 0 : 1;
         const mix = section === 0 ? scaled * 2 : (scaled - 0.5) * 2;
-        return [0, 1, 2].map(channel => Math.round(stops[section][channel] * (1 - mix) + stops[section + 1][channel] * mix)).concat(255);
+        return [0, 1, 2]
+            .map(channel => Math.round(stops[section][channel] * (1 - mix) + stops[section + 1][channel] * mix))
+            .concat(255);
     }
 
-    function fieldCanvas(values, rows, columns, minimum, maximum, divergent) {
+    function fieldCanvas(values, rows, columns, minimum, maximum, divergent = false) {
         const canvas = document.createElement("canvas");
         canvas.width = columns;
         canvas.height = rows;
         const context = canvas.getContext("2d");
         const image = context.createImageData(columns, rows);
         for (let index = 0; index < values.length; index += 1) {
-            const rgba = color(values[index], minimum, maximum, divergent);
-            image.data.set(rgba, index * 4);
+            image.data.set(color(values[index], minimum, maximum, divergent), index * 4);
         }
         context.putImageData(image, 0, 0);
         return canvas;
@@ -257,22 +301,22 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderMaps(dataset, point) {
         const difference = new Float32Array(dataset.mean.length);
         for (let index = 0; index < difference.length; index += 1) {
-            difference[index] = dataset.mean[index] - dataset.reference[index];
+            difference[index] = dataset.mean[index] - dataset.reanalysis[index];
         }
-        const combined = new Float32Array(dataset.mean.length + dataset.reference.length);
+        const combined = new Float32Array(dataset.mean.length + dataset.reanalysis.length);
         combined.set(dataset.mean);
-        combined.set(dataset.reference, dataset.mean.length);
+        combined.set(dataset.reanalysis, dataset.mean.length);
         const temperatureMin = finitePercentile(combined, 0.01);
         const temperatureMax = finitePercentile(combined, 0.99);
-        const differenceLimit = Math.max(
+        const errorLimit = Math.max(
             Math.abs(finitePercentile(difference, 0.01)),
             Math.abs(finitePercentile(difference, 0.99)),
             0.001
         );
         const panels = [
             [dataset.mean, "C3S seasonal forecast (ensemble mean)", temperatureMin, temperatureMax, false],
-            [dataset.reference, "ERA5 reanalysis (not raw obs)", temperatureMin, temperatureMax, false],
-            [difference, "Forecast − Reanalysis error", -differenceLimit, differenceLimit, true]
+            [dataset.reanalysis, "ERA5 reanalysis (assimilated analysis)", temperatureMin, temperatureMax, false],
+            [difference, "Forecast − ERA5 error", -errorLimit, errorLimit, true]
         ];
 
         const canvas = document.createElement("canvas");
@@ -281,42 +325,49 @@ document.addEventListener("DOMContentLoaded", () => {
         const context = canvas.getContext("2d");
         context.fillStyle = "#0f172a";
         context.fillRect(0, 0, canvas.width, canvas.height);
-        context.font = "600 22px Inter, sans-serif";
-        context.textAlign = "center";
         const panelWidth = 460;
         const panelHeight = 360;
         const top = 65;
 
         panels.forEach(([values, title, minimum, maximum, divergent], panelIndex) => {
             const left = 25 + panelIndex * 495;
-            const source = fieldCanvas(values, dataset.latCount, dataset.lonCount, minimum, maximum, divergent);
+            const field = fieldCanvas(
+                values,
+                dataset.latCount,
+                dataset.lonCount,
+                minimum,
+                maximum,
+                divergent
+            );
             context.imageSmoothingEnabled = true;
-            context.drawImage(source, left, top, panelWidth, panelHeight);
+            context.drawImage(field, left, top, panelWidth, panelHeight);
             context.fillStyle = "#f8fafc";
+            context.font = "600 21px Inter, sans-serif";
+            context.textAlign = "center";
             context.fillText(title, left + panelWidth / 2, 38);
+
             context.strokeStyle = "#84cc16";
             context.lineWidth = 3;
-            const x = left + point.lonIndex / (dataset.lonCount - 1) * panelWidth;
-            const y = top + point.latIndex / (dataset.latCount - 1) * panelHeight;
+            const selectedX = left + point.lonIndex / (dataset.lonCount - 1) * panelWidth;
+            const selectedY = top + point.latIndex / (dataset.latCount - 1) * panelHeight;
             context.beginPath();
-            context.moveTo(x - 9, y);
-            context.lineTo(x + 9, y);
-            context.moveTo(x, y - 9);
-            context.lineTo(x, y + 9);
+            context.moveTo(selectedX - 9, selectedY);
+            context.lineTo(selectedX + 9, selectedY);
+            context.moveTo(selectedX, selectedY - 9);
+            context.lineTo(selectedX, selectedY + 9);
             context.stroke();
+
             context.font = "15px Inter, sans-serif";
             context.fillStyle = "#94a3b8";
             context.textAlign = "left";
             context.fillText(`${minimum.toFixed(1)} °C`, left, 455);
             context.textAlign = "right";
             context.fillText(`${maximum.toFixed(1)} °C`, left + panelWidth, 455);
-            context.font = "600 22px Inter, sans-serif";
-            context.textAlign = "center";
         });
         return canvas.toDataURL("image/png");
     }
 
-    function drawChart(ensembles, mean, observation) {
+    function drawChart(ensembles, mean, reanalysis, observation) {
         if (typeof Chart === "undefined") return;
         const context = document.getElementById("ensembleChart").getContext("2d");
         if (chartInstance) chartInstance.destroy();
@@ -327,7 +378,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [
                     { label: `${ensembles.length} C3S ensemble members`, data: jitteredMembers, backgroundColor: "rgba(59, 130, 246, 0.6)", pointRadius: 6 },
                     { label: "Ensemble mean", data: [{ x: mean, y: 0 }], backgroundColor: "#ef4444", pointRadius: 10, pointStyle: "rect" },
-                    { label: "ERA5 reanalysis", data: [{ x: observation, y: 0 }], backgroundColor: "#10b981", pointRadius: 12, pointStyle: "triangle", rotation: 180 }
+                    { label: "ERA5 reanalysis", data: [{ x: reanalysis, y: 0 }], backgroundColor: "#a855f7", pointRadius: 11, pointStyle: "circle" },
+                    { label: "Measured station temperature", data: [{ x: observation, y: 0 }], backgroundColor: "#10b981", pointRadius: 12, pointStyle: "triangle", rotation: 180 }
                 ]
             },
             options: {
@@ -336,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 scales: {
                     y: { display: false, min: -0.2, max: 0.2 },
                     x: {
-                        title: { display: true, text: "2 m temperature (°C)", color: "#94a3b8" },
+                        title: { display: true, text: "Monthly air temperature (°C)", color: "#94a3b8" },
                         grid: { color: "rgba(255, 255, 255, 0.1)" },
                         ticks: { color: "#94a3b8" }
                     }
@@ -353,6 +405,5 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll('input[name="backend_mode"]').forEach(input => input.addEventListener("change", loadAnalysis));
     ["target_var", "init_year", "init_month"].forEach(id => document.getElementById(id).addEventListener("change", loadAnalysis));
 
-    // Disable the button immediately and show the real bundled month on first open.
     loadAnalysis();
 });
