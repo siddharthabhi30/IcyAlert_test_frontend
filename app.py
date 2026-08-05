@@ -13,6 +13,14 @@ with st.sidebar:
     app_token = st.text_input("App Token", type="password", placeholder="Enter secret token")
     
     st.markdown("---")
+    st.header("🌐 Backend Connection")
+    backend_mode = st.radio(
+        "Select Backend Server:",
+        ["Remote (Render)", "Local (localhost)"],
+        help="Switch between your live Render deployment and your local testing server."
+    )
+    
+    st.markdown("---")
     st.header("Data Parameters")
     target_var = st.selectbox("State Variable", [
         "sea_ice_cover", 
@@ -41,7 +49,8 @@ if st.button("Fetch & Analyze from Backend"):
 if st.session_state.get('active', False):
     with st.spinner("Calling Backend API... (Calculating Ensemble Spread)"):
         try:
-            res = requests.post("https://icyalert-test-backend.onrender.com/analyze", json={
+            target_url = "https://icyalert-test-backend.onrender.com/analyze" if backend_mode == "Remote (Render)" else "http://localhost:8000/analyze"
+            res = requests.post(target_url, json={
                 "auth_token": st.session_state.app_token,
                 "variable": target_var,
                 "year": init_year,
