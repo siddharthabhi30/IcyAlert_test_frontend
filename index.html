@@ -98,7 +98,11 @@
             <div class="results-grid">
                 <!-- 2D Spatial Map -->
                 <div class="card map-card">
-                    <h3>🗺️ Real Monthly Spatial Maps</h3>
+                    <h3>🗺️ Seasonal Forecast, ERA5 Reanalysis and Error Map</h3>
+                    <p class="map-explanation">
+                        C3S is the seasonal ensemble forecast (process model). ERA5 is a reanalysis product (model + assimilated observations, not raw observations).
+                        Error is the C3S ensemble mean minus ERA5 reanalysis.
+                    </p>
                     <div class="img-container">
                         <img id="map_image" src="" style="display: none;" alt="Spatial Map">
                         <div id="map_placeholder" class="placeholder">
@@ -116,11 +120,11 @@
                             <h2 id="metric_mean">--</h2>
                         </div>
                         <div class="metric-box">
-                            <p class="label">ERA5 Reference</p>
+                            <p class="label">ERA5 Reanalysis</p>
                             <h2 id="metric_obs">--</h2>
                         </div>
                         <div class="metric-box">
-                            <p class="label">Error</p>
+                            <p class="label">Forecast − Reanalysis Error</p>
                             <h2 id="metric_error">--</h2>
                         </div>
                         <div class="metric-box">

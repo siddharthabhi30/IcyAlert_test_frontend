@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             if (localUrl) {
-                showStatus("Loading the bundled real C3S and ERA5 monthly grids…");
+                showStatus("Loading the bundled C3S forecast and ERA5 reanalysis grids…");
                 const dataset = await loadMonthlyGrid(localUrl);
                 if (requestId !== activeRequest) return;
                 const point = localPoint(dataset, payload);
@@ -270,9 +270,9 @@ document.addEventListener("DOMContentLoaded", () => {
             0.001
         );
         const panels = [
-            [dataset.mean, "C3S ensemble mean", temperatureMin, temperatureMax, false],
-            [dataset.reference, "ERA5 monthly reference", temperatureMin, temperatureMax, false],
-            [difference, "Forecast − ERA5", -differenceLimit, differenceLimit, true]
+            [dataset.mean, "C3S seasonal forecast (ensemble mean)", temperatureMin, temperatureMax, false],
+            [dataset.reference, "ERA5 reanalysis (not raw obs)", temperatureMin, temperatureMax, false],
+            [difference, "Forecast − Reanalysis error", -differenceLimit, differenceLimit, true]
         ];
 
         const canvas = document.createElement("canvas");
@@ -327,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 datasets: [
                     { label: `${ensembles.length} C3S ensemble members`, data: jitteredMembers, backgroundColor: "rgba(59, 130, 246, 0.6)", pointRadius: 6 },
                     { label: "Ensemble mean", data: [{ x: mean, y: 0 }], backgroundColor: "#ef4444", pointRadius: 10, pointStyle: "rect" },
-                    { label: "ERA5 reference", data: [{ x: observation, y: 0 }], backgroundColor: "#10b981", pointRadius: 12, pointStyle: "triangle", rotation: 180 }
+                    { label: "ERA5 reanalysis", data: [{ x: observation, y: 0 }], backgroundColor: "#10b981", pointRadius: 12, pointStyle: "triangle", rotation: 180 }
                 ]
             },
             options: {

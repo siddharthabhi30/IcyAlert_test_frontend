@@ -163,6 +163,13 @@ input[type="range"] {
     font-weight: 600;
 }
 
+.map-explanation {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: -0.75rem 0 1.25rem;
+}
+
 .img-container {
     width: 100%;
     background: rgba(15, 23, 42, 0.5);
