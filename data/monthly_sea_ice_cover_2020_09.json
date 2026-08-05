@@ -436,16 +436,17 @@
     "alignment": "nearest ERA5 grid cell on the C3S 1-degree grid"
   },
   "observations": {
-    "file": "osisaf_sea_ice_concentration_2020_09_on_c3s_arctic_grid.f32",
+    "file": "osisaf_450a1_v3p1_sea_ice_concentration_2020_09_on_c3s_arctic_grid.f32",
     "shape": [
       40,
       360
     ],
-    "sha256": "8db874788e55f555cd7d9c63483dc3f12dbf00f3377b8a8c30ac7cdae62a56f6",
-    "label": "OSI SAF satellite observation",
-    "dataset": "OSI-450-a Climate Data Record v3.0 monthly sea-ice concentration",
-    "url": "https://osi-saf.eumetsat.int/products/osi-450-a",
-    "file_url": "https://thredds.met.no/thredds/fileServer/osisaf/met.no/reprocessed/ice/conc_450a_files/monthly/2020/ice_conc_nh_ease2-250_cdr-v3p0_202009.nc",
+    "sha256": "a1ce757664e98ee9724ce70fbe847c911e798a94bb2dbbe2e8fb65bc379f8934",
+    "label": "OSI SAF satellite-derived climate data record",
+    "dataset": "OSI-450-a1 Climate Data Record v3.1 monthly sea-ice concentration",
+    "url": "https://user.eumetsat.int/catalogue/EO%3AEUM%3ADAT%3A1021",
+    "doi": "https://doi.org/10.15770/EUM_SAF_OSI_0023",
+    "file_url": "https://thredds.met.no/thredds/fileServer/osisaf/met.no/reprocessed/ice/conc_450a1_files/monthly/2020/ice_conc_nh_ease2-250_cdr-v3p1_202009.nc",
     "alignment": "nearest OSI SAF 25 km EASE2 grid-cell centre on the C3S grid",
     "copyright": "Copyright 2020 EUMETSAT"
   }

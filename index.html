@@ -99,7 +99,7 @@
                 <div class="card map-card">
                     <h3>🗺️ Seasonal Forecast, ERA5 Reanalysis and Error Map</h3>
                     <p class="map-explanation">
-                        C3S is the process-model forecast. ERA5 is the complete assimilated analysis. The map error is C3S minus ERA5.
+                        C3S is output from ECMWF's SEAS5 dynamical Earth-system forecast. ERA5 is the complete assimilated reanalysis. The map error is C3S minus ERA5.
                         The pixel analysis below additionally shows the nearest real measured land-station observation.
                     </p>
                     <div class="img-container">
@@ -154,7 +154,7 @@
                         <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/seasonal-monthly-single-levels?tab=overview" target="_blank" rel="noopener noreferrer">
                             <span class="source-role">Used in maps and pixel analysis</span>
                             <strong>C3S Seasonal Forecasts</strong>
-                            <small>Process-model forecast · ECMWF System 51 · 51-member monthly ensemble</small>
+                            <small>Dynamical Earth-system forecast output · ECMWF SEAS5/System 51 · 51-member monthly ensemble</small>
                         </a>
                         <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview" target="_blank" rel="noopener noreferrer">
                             <span class="source-role">Used in maps and pixel analysis</span>
@@ -175,9 +175,9 @@
                 </div>
 
                 <div class="card map-card">
-                    <h3>🧊 Sea-Ice Forecast, Reanalysis, Satellite Observation and Error</h3>
+                    <h3>🧊 Sea-Ice Forecast, Reanalysis, Satellite Record and Error</h3>
                     <p class="map-explanation">
-                        C3S is the process-model ensemble forecast. ERA5 is the assimilated reanalysis. OSI SAF is the satellite sea-ice observation.
+                        C3S is output from ECMWF's SEAS5 dynamical Earth-system forecast. ERA5 is the assimilated reanalysis. OSI SAF is the satellite-derived sea-ice concentration record.
                         The error map is C3S ensemble mean minus OSI SAF.
                     </p>
                     <div class="img-container sea-ice-map-container">
@@ -200,7 +200,7 @@
                             <h2 id="sea_ice_metric_reanalysis">--</h2>
                         </div>
                         <div class="metric-box">
-                            <p class="label">OSI SAF Observation</p>
+                            <p class="label">OSI SAF Satellite CDR</p>
                             <h2 id="sea_ice_metric_observation">--</h2>
                         </div>
                         <div class="metric-box">
@@ -225,11 +225,11 @@
                 <section class="card data-sources" aria-label="Sea-ice dataset provenance">
                     <h3>🔗 Sea-ice dataset provenance</h3>
                     <p class="source-explanation">
-                        These are three different roles, aligned onto the C3S grid only for comparison: forecast, reanalysis, and satellite observation.
+                        These are three different roles, aligned onto the C3S grid only for comparison: forecast output, reanalysis, and a satellite-derived climate data record.
                     </p>
                     <div class="source-grid">
                         <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/seasonal-monthly-single-levels?tab=overview" target="_blank" rel="noopener noreferrer">
-                            <span class="source-role">Process-model forecast</span>
+                            <span class="source-role">Dynamical model forecast output</span>
                             <strong>C3S Seasonal Forecasts</strong>
                             <small>ECMWF System 51 · 51 monthly ensemble members · sea-ice cover</small>
                         </a>
@@ -238,16 +238,16 @@
                             <strong>ERA5 Monthly Reanalysis</strong>
                             <small>Complete model-and-observation analysis · sea-ice cover</small>
                         </a>
-                        <a class="source-card" href="https://osi-saf.eumetsat.int/products/osi-450-a" target="_blank" rel="noopener noreferrer">
-                            <span class="source-role">Satellite observation</span>
-                            <strong>OSI SAF OSI-450-a</strong>
-                            <small>25 km monthly sea-ice concentration CDR · Copyright 2020 EUMETSAT</small>
+                        <a class="source-card" href="https://user.eumetsat.int/catalogue/EO%3AEUM%3ADAT%3A1021" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Satellite-derived observation</span>
+                            <strong>OSI SAF OSI-450-a1 v3.1</strong>
+                            <small>Corrected 25 km monthly sea-ice concentration CDR · Copyright 2020 EUMETSAT</small>
                         </a>
                     </div>
                 </section>
             </div>
         </main>
     </div>
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
 </body>
 </html>

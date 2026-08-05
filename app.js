@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const LOCAL_DATASETS = Object.freeze({
         "2m_temperature|2020|09": "data/monthly_2m_temperature_2020_09.json?v=3"
     });
-    const LOCAL_SEA_ICE_DATASET = "data/monthly_sea_ice_cover_2020_09.json?v=1";
+    const LOCAL_SEA_ICE_DATASET = "data/monthly_sea_ice_cover_2020_09.json?v=2";
     const monthlyCache = new Map();
     const backendResponseCache = new Map();
     let chartInstance = null;
@@ -517,7 +517,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const panels = [
             [dataset.mean, "C3S forecast (51-member mean)", 0, 100, false, "ice"],
             [dataset.reanalysis, "ERA5 reanalysis", 0, 100, false, "ice"],
-            [dataset.observation, "OSI SAF satellite observation", 0, 100, false, "ice"],
+            [dataset.observation, "OSI SAF satellite-derived CDR", 0, 100, false, "ice"],
             [forecastMinusObservation, "Forecast − OSI SAF error", -errorLimit, errorLimit, true, "temperature"]
         ];
 
@@ -624,7 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
             datasets.push({ label: "ERA5 reanalysis", data: [{ x: point.metrics.reanalysis, y: 0 }], backgroundColor: "#a855f7", pointRadius: 11, pointStyle: "circle" });
         }
         if (Number.isFinite(point.metrics.observation)) {
-            datasets.push({ label: "OSI SAF satellite observation", data: [{ x: point.metrics.observation, y: 0 }], backgroundColor: "#10b981", pointRadius: 12, pointStyle: "triangle", rotation: 180 });
+            datasets.push({ label: "OSI SAF satellite-derived CDR", data: [{ x: point.metrics.observation, y: 0 }], backgroundColor: "#10b981", pointRadius: 12, pointStyle: "triangle", rotation: 180 });
         }
         seaIceChartInstance = new Chart(context, {
             type: "scatter",
