@@ -111,6 +111,13 @@ input[type="range"] {
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
+.primary-btn:disabled {
+    cursor: wait;
+    opacity: 0.65;
+    transform: none;
+    box-shadow: none;
+}
+
 .status {
     margin-top: 1rem;
     font-size: 0.9rem;
