@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IcyAlert Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2>🧊 IcyAlert</h2>
+            
+            <div class="control-group">
+                <h3>🔑 Authentication</h3>
+                <input type="password" id="app_token" placeholder="Enter secret token (e.g., loki)">
+            </div>
+
+            <div class="control-group">
+                <h3>🌐 Backend Connection</h3>
+                <label>
+                    <input type="radio" name="backend_mode" value="https://icyalert-test-backend.onrender.com" checked>
+                    Remote (Render)
+                </label>
+                <label>
+                    <input type="radio" name="backend_mode" value="http://localhost:8000">
+                    Local (localhost:8000)
+                </label>
+            </div>
+
+            <div class="control-group">
+                <h3>📊 Data Parameters</h3>
+                <label>State Variable:</label>
+                <select id="target_var">
+                    <option value="sea_ice_cover">Sea Ice Cover</option>
+                    <option value="2m_temperature">2m Temperature</option>
+                    <option value="sea_surface_temperature">Sea Surface Temperature</option>
+                    <option value="mean_sea_level_pressure">Mean Sea Level Pressure</option>
+                    <option value="total_precipitation">Total Precipitation</option>
+                    <option value="10m_u_component_of_wind">10m U Wind Component</option>
+                    <option value="10m_v_component_of_wind">10m V Wind Component</option>
+                </select>
+
+                <label>Year:</label>
+                <select id="init_year">
+                    <option value="2015">2015</option>
+                    <option value="2016">2016</option>
+                    <option value="2017">2017</option>
+                    <option value="2018">2018</option>
+                    <option value="2019">2019</option>
+                    <option value="2020" selected>2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                </select>
+
+                <label>Month:</label>
+                <select id="init_month">
+                    <option value="01">01</option>
+                    <option value="03">03</option>
+                    <option value="06">06</option>
+                    <option value="09" selected>09</option>
+                    <option value="12">12</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <h3>📍 Interactive Pixel Selector</h3>
+                <label>Latitude: <span id="lat_val">75.0</span></label>
+                <input type="range" id="selected_lat" min="-90" max="90" step="0.5" value="75">
+                
+                <label>Longitude: <span id="lon_val">0.0</span></label>
+                <input type="range" id="selected_lon" min="0" max="359" step="0.5" value="0">
+            </div>
+
+            <button id="fetch_btn" class="primary-btn">Fetch & Analyze</button>
+            <p id="status_msg" class="status"></p>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>Dashboard</h1>
+            </header>
+
+            <div class="results-grid">
+                <!-- 2D Spatial Map -->
+                <div class="card map-card">
+                    <h3>🗺️ Spatial Maps</h3>
+                    <div class="img-container">
+                        <img id="map_image" src="" style="display: none;" alt="Spatial Map">
+                        <div id="map_placeholder" class="placeholder">
+                            <p>No map loaded. Click "Fetch & Analyze" to generate maps.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1D Analysis Panel -->
+                <div class="card analysis-card">
+                    <h3>📍 Pixel Analysis</h3>
+                    <div class="metrics-row">
+                        <div class="metric-box">
+                            <p class="label">Ensemble Mean</p>
+                            <h2 id="metric_mean">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">True Observation</p>
+                            <h2 id="metric_obs">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Error</p>
+                            <h2 id="metric_error">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Ensemble Spread</p>
+                            <h2 id="metric_spread">--</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="ensembleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
