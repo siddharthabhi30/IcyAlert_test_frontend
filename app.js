@@ -4,10 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const appToken = document.getElementById("app_token");
     const mapImage = document.getElementById("map_image");
     const mapPlaceholder = document.getElementById("map_placeholder");
-    const latSlider = document.getElementById("selected_lat");
-    const lonSlider = document.getElementById("selected_lon");
-    const latVal = document.getElementById("lat_val");
-    const lonVal = document.getElementById("lon_val");
+    const temperatureLatSlider = document.getElementById("temperature_lat");
+    const temperatureLonSlider = document.getElementById("temperature_lon");
+    const temperatureLatValue = document.getElementById("temperature_lat_val");
+    const temperatureLonValue = document.getElementById("temperature_lon_val");
+    const seaIceLatSlider = document.getElementById("sea_ice_lat");
+    const seaIceLonSlider = document.getElementById("sea_ice_lon");
+    const seaIceLatValue = document.getElementById("sea_ice_lat_val");
+    const seaIceLonValue = document.getElementById("sea_ice_lon_val");
     const metricMean = document.getElementById("metric_mean");
     const metricReanalysis = document.getElementById("metric_reanalysis");
     const metricObs = document.getElementById("metric_obs");
@@ -32,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let chartInstance = null;
     let seaIceChartInstance = null;
     let activeRequest = 0;
+    let sliderUpdateTimer = null;
 
     function selectedBackend() {
         const queryOverride = new URLSearchParams(window.location.search).get("backend");
@@ -45,8 +50,15 @@ document.addEventListener("DOMContentLoaded", () => {
             variable: document.getElementById("target_var").value,
             year: document.getElementById("init_year").value,
             month: document.getElementById("init_month").value,
-            lat: Number(latSlider.value),
-            lon: Number(lonSlider.value)
+            lat: Number(temperatureLatSlider.value),
+            lon: Number(temperatureLonSlider.value)
+        };
+    }
+
+    function buildSeaIceLocation() {
+        return {
+            lat: Number(seaIceLatSlider.value),
+            lon: Number(seaIceLonSlider.value)
         };
     }
 
@@ -67,6 +79,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function showStatus(message, type = "") {
         statusMsg.textContent = message;
         statusMsg.className = `status ${type}`;
+    }
+
+    function scheduleBundledUpdate() {
+        const payload = buildPayload();
+        if (!LOCAL_DATASETS[datasetKey(payload)]) return;
+        clearTimeout(sliderUpdateTimer);
+        sliderUpdateTimer = setTimeout(loadAnalysis, 120);
+    }
+
+    function finishSliderUpdate() {
+        clearTimeout(sliderUpdateTimer);
+        loadAnalysis();
     }
 
     async function fetchFloat32(url, expectedLength) {
@@ -296,12 +320,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 ]);
                 if (requestId !== activeRequest) return;
                 const point = localPoint(dataset, payload);
-                const icePoint = seaIcePoint(seaIceDataset, payload);
+                const icePoint = seaIcePoint(seaIceDataset, buildSeaIceLocation());
                 renderLocalDashboard(dataset, point);
                 renderSeaIceDashboard(seaIceDataset, icePoint);
                 const stationName = point.station[1] || point.station[0];
                 showStatus(
-                    `${stationName} station · ${point.stationDistance.toFixed(0)} km away; sea-ice grid · ${icePoint.latitude.toFixed(1)}°, ${icePoint.longitude.toFixed(1)}°`,
+                    `Temperature: ${stationName} station · ${point.stationDistance.toFixed(0)} km away; sea ice: ${icePoint.latitude.toFixed(1)}°, ${icePoint.longitude.toFixed(1)}° grid cell`,
                     "success"
                 );
                 return;
@@ -646,10 +670,28 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    latSlider.addEventListener("input", event => { latVal.textContent = Number(event.target.value).toFixed(1); });
-    lonSlider.addEventListener("input", event => { lonVal.textContent = Number(event.target.value).toFixed(1); });
-    latSlider.addEventListener("change", loadAnalysis);
-    lonSlider.addEventListener("change", loadAnalysis);
+    temperatureLatSlider.addEventListener("input", event => {
+        temperatureLatValue.textContent = Number(event.target.value).toFixed(1);
+        scheduleBundledUpdate();
+    });
+    temperatureLonSlider.addEventListener("input", event => {
+        temperatureLonValue.textContent = Number(event.target.value).toFixed(1);
+        scheduleBundledUpdate();
+    });
+    seaIceLatSlider.addEventListener("input", event => {
+        seaIceLatValue.textContent = Number(event.target.value).toFixed(1);
+        scheduleBundledUpdate();
+    });
+    seaIceLonSlider.addEventListener("input", event => {
+        seaIceLonValue.textContent = Number(event.target.value).toFixed(1);
+        scheduleBundledUpdate();
+    });
+    [
+        temperatureLatSlider,
+        temperatureLonSlider,
+        seaIceLatSlider,
+        seaIceLonSlider
+    ].forEach(slider => slider.addEventListener("change", finishSliderUpdate));
     fetchBtn.addEventListener("click", loadAnalysis);
     document.querySelectorAll('input[name="backend_mode"]').forEach(input => input.addEventListener("change", loadAnalysis));
     ["target_var", "init_year", "init_month"].forEach(id => document.getElementById(id).addEventListener("change", loadAnalysis));

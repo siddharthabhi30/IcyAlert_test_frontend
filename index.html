@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IcyAlert Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -70,13 +70,24 @@
                 </select>
             </div>
 
-            <div class="control-group">
-                <h3>📍 Interactive Pixel Selector</h3>
-                <label>Latitude: <span id="lat_val">75.0</span></label>
-                <input type="range" id="selected_lat" min="50" max="90" step="0.5" value="75">
-                
-                <label>Longitude: <span id="lon_val">0.0</span></label>
-                <input type="range" id="selected_lon" min="-180" max="180" step="0.5" value="0">
+            <div class="control-group location-controls">
+                <h3>🌡️ Air-Temperature Location</h3>
+                <p class="control-help">Finds the nearest measured land station, then compares C3S and ERA5 at that station.</p>
+                <label>Latitude: <span id="temperature_lat_val">75.0</span></label>
+                <input type="range" id="temperature_lat" min="50" max="90" step="0.5" value="75">
+
+                <label>Longitude: <span id="temperature_lon_val">0.0</span></label>
+                <input type="range" id="temperature_lon" min="-180" max="180" step="0.5" value="0">
+            </div>
+
+            <div class="control-group location-controls">
+                <h3>🧊 Sea-Ice Grid Location</h3>
+                <p class="control-help">Selects the nearest C3S Arctic grid cell independently of the temperature station.</p>
+                <label>Latitude: <span id="sea_ice_lat_val">75.0</span></label>
+                <input type="range" id="sea_ice_lat" min="50" max="90" step="0.5" value="75">
+
+                <label>Longitude: <span id="sea_ice_lon_val">0.0</span></label>
+                <input type="range" id="sea_ice_lon" min="-180" max="180" step="0.5" value="0">
             </div>
 
             <button id="fetch_btn" class="primary-btn">Fetch & Analyze</button>
@@ -170,7 +181,7 @@
                 </section>
 
                 <div class="section-heading sea-ice-heading">
-                    <span class="section-kicker">September 2020 · Monthly mean · Same selected pixel</span>
+                    <span class="section-kicker">September 2020 · Monthly mean · Independent sea-ice grid location</span>
                     <h2>Sea-Ice Concentration</h2>
                 </div>
 
@@ -248,6 +259,6 @@
             </div>
         </main>
     </div>
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
 </body>
 </html>
