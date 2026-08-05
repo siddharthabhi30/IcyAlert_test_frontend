@@ -16,7 +16,7 @@
             
             <div class="control-group">
                 <h3>🔑 Authentication</h3>
-                <input type="password" id="app_token" placeholder="Enter secure App Token">
+                <input type="password" id="app_token" placeholder="Optional for bundled Sep 2020 data">
             </div>
 
             <div class="control-group">
@@ -98,11 +98,11 @@
             <div class="results-grid">
                 <!-- 2D Spatial Map -->
                 <div class="card map-card">
-                    <h3>🗺️ Spatial Maps</h3>
+                    <h3>🗺️ Real Monthly Spatial Maps</h3>
                     <div class="img-container">
                         <img id="map_image" src="" style="display: none;" alt="Spatial Map">
                         <div id="map_placeholder" class="placeholder">
-                            <p>No map loaded. Click "Fetch & Analyze" to generate maps.</p>
+                            <p>Loading bundled September 2020 C3S and ERA5 monthly data…</p>
                         </div>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
                             <h2 id="metric_mean">--</h2>
                         </div>
                         <div class="metric-box">
-                            <p class="label">True Observation</p>
+                            <p class="label">ERA5 Reference</p>
                             <h2 id="metric_obs">--</h2>
                         </div>
                         <div class="metric-box">
