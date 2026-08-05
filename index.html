@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IcyAlert Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -90,6 +90,11 @@
             </header>
 
             <div class="results-grid">
+                <div class="section-heading">
+                    <span class="section-kicker">September 2020 · Monthly mean</span>
+                    <h2>Air Temperature</h2>
+                </div>
+
                 <!-- 2D Spatial Map -->
                 <div class="card map-card">
                     <h3>🗺️ Seasonal Forecast, ERA5 Reanalysis and Error Map</h3>
@@ -163,9 +168,86 @@
                         </a>
                     </div>
                 </section>
+
+                <div class="section-heading sea-ice-heading">
+                    <span class="section-kicker">September 2020 · Monthly mean · Same selected pixel</span>
+                    <h2>Sea-Ice Concentration</h2>
+                </div>
+
+                <div class="card map-card">
+                    <h3>🧊 Sea-Ice Forecast, Reanalysis, Satellite Observation and Error</h3>
+                    <p class="map-explanation">
+                        C3S is the process-model ensemble forecast. ERA5 is the assimilated reanalysis. OSI SAF is the satellite sea-ice observation.
+                        The error map is C3S ensemble mean minus OSI SAF.
+                    </p>
+                    <div class="img-container sea-ice-map-container">
+                        <img id="sea_ice_map_image" src="" style="display: none;" alt="Sea-ice concentration maps">
+                        <div id="sea_ice_map_placeholder" class="placeholder">
+                            <p>Loading C3S, ERA5, and OSI SAF sea-ice concentration for September 2020…</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card analysis-card">
+                    <h3>📍 Sea-Ice Pixel Analysis</h3>
+                    <div class="metrics-row">
+                        <div class="metric-box">
+                            <p class="label">C3S Ensemble Mean</p>
+                            <h2 id="sea_ice_metric_mean">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">ERA5 Reanalysis</p>
+                            <h2 id="sea_ice_metric_reanalysis">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">OSI SAF Observation</p>
+                            <h2 id="sea_ice_metric_observation">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Forecast − ERA5</p>
+                            <h2 id="sea_ice_metric_reanalysis_error">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Forecast − OSI SAF</p>
+                            <h2 id="sea_ice_metric_observation_error">--</h2>
+                        </div>
+                        <div class="metric-box">
+                            <p class="label">Ensemble Spread</p>
+                            <h2 id="sea_ice_metric_spread">--</h2>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="seaIceEnsembleChart"></canvas>
+                    </div>
+                </div>
+
+                <section class="card data-sources" aria-label="Sea-ice dataset provenance">
+                    <h3>🔗 Sea-ice dataset provenance</h3>
+                    <p class="source-explanation">
+                        These are three different roles, aligned onto the C3S grid only for comparison: forecast, reanalysis, and satellite observation.
+                    </p>
+                    <div class="source-grid">
+                        <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/seasonal-monthly-single-levels?tab=overview" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Process-model forecast</span>
+                            <strong>C3S Seasonal Forecasts</strong>
+                            <small>ECMWF System 51 · 51 monthly ensemble members · sea-ice cover</small>
+                        </a>
+                        <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Assimilated reference</span>
+                            <strong>ERA5 Monthly Reanalysis</strong>
+                            <small>Complete model-and-observation analysis · sea-ice cover</small>
+                        </a>
+                        <a class="source-card" href="https://osi-saf.eumetsat.int/products/osi-450-a" target="_blank" rel="noopener noreferrer">
+                            <span class="source-role">Satellite observation</span>
+                            <strong>OSI SAF OSI-450-a</strong>
+                            <small>25 km monthly sea-ice concentration CDR · Copyright 2020 EUMETSAT</small>
+                        </a>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>

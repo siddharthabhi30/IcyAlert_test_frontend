@@ -150,6 +150,29 @@ input[type="range"] {
     gap: 2rem;
 }
 
+.section-heading {
+    padding: 0.25rem 0;
+}
+
+.section-heading h2 {
+    margin-top: 0.25rem;
+    font-size: 1.6rem;
+}
+
+.section-kicker {
+    color: #60a5fa;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sea-ice-heading {
+    margin-top: 1.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
 .card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -241,6 +264,10 @@ input[type="range"] {
 .img-container img {
     max-width: 100%;
     height: auto;
+}
+
+.sea-ice-map-container {
+    min-height: 520px;
 }
 
 .placeholder p {
