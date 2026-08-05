@@ -224,13 +224,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    function stationForecastPoint(dataset, station) {
-        const stationLat = station[2];
-        const stationLon = ((station[3] % 360) + 360) % 360;
-        const latIndex = nearestIndex(dataset.metadata.latitudes, stationLat);
-        const lonIndex = nearestIndex(dataset.metadata.longitudes, stationLon);
+    function selectedForecastPoint(dataset, payload) {
+        const longitude = ((payload.lon % 360) + 360) % 360;
+        const latIndex = nearestIndex(dataset.metadata.latitudes, payload.lat);
+        const lonIndex = nearestIndex(dataset.metadata.longitudes, longitude);
         const cell = latIndex * dataset.lonCount + lonIndex;
-        return { latIndex, lonIndex, cell, mean: dataset.mean[cell] };
+        return {
+            latIndex,
+            lonIndex,
+            cell,
+            mean: dataset.mean[cell],
+            latitude: dataset.metadata.latitudes[latIndex],
+            longitude: dataset.metadata.longitudes[lonIndex]
+        };
     }
 
     function localPoint(dataset, payload) {
@@ -244,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        const grid = stationForecastPoint(dataset, station);
+        const grid = selectedForecastPoint(dataset, payload);
         const cellCount = dataset.latCount * dataset.lonCount;
         const ensembles = [];
         for (let member = 0; member < dataset.members; member += 1) {
@@ -266,6 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             latIndex: grid.latIndex,
             lonIndex: grid.lonIndex,
+            latitude: grid.latitude,
+            longitude: grid.longitude,
             station,
             stationDistance
         };
@@ -325,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderSeaIceDashboard(seaIceDataset, icePoint);
                 const stationName = point.station[1] || point.station[0];
                 showStatus(
-                    `Temperature: ${stationName} station · ${point.stationDistance.toFixed(0)} km away; sea ice: ${icePoint.latitude.toFixed(1)}°, ${icePoint.longitude.toFixed(1)}° grid cell`,
+                    `Temperature grid: ${point.latitude.toFixed(1)}°, ${point.longitude.toFixed(1)}° · nearest station ${stationName}, ${point.stationDistance.toFixed(0)} km away; sea ice grid: ${icePoint.latitude.toFixed(1)}°, ${icePoint.longitude.toFixed(1)}°`,
                     "success"
                 );
                 return;
@@ -475,9 +483,9 @@ document.addEventListener("DOMContentLoaded", () => {
             0.001
         );
         const panels = [
-            [dataset.mean, "C3S seasonal forecast (ensemble mean)", temperatureMin, temperatureMax, false],
-            [dataset.reanalysis, "ERA5 reanalysis (assimilated analysis)", temperatureMin, temperatureMax, false],
-            [difference, "Forecast − ERA5 error", -errorLimit, errorLimit, true]
+            [centerLongitudeForDisplay(dataset.mean, dataset.latCount, dataset.lonCount), "C3S seasonal forecast (ensemble mean)", temperatureMin, temperatureMax, false],
+            [centerLongitudeForDisplay(dataset.reanalysis, dataset.latCount, dataset.lonCount), "ERA5 reanalysis (assimilated analysis)", temperatureMin, temperatureMax, false],
+            [centerLongitudeForDisplay(difference, dataset.latCount, dataset.lonCount), "Forecast − ERA5 error", -errorLimit, errorLimit, true]
         ];
 
         const canvas = document.createElement("canvas");
@@ -509,7 +517,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             context.strokeStyle = "#84cc16";
             context.lineWidth = 3;
-            const selectedX = left + point.lonIndex / (dataset.lonCount - 1) * panelWidth;
+            const displayLonIndex = longitudeIndexForDisplay(point.lonIndex, dataset.lonCount);
+            const selectedX = left + displayLonIndex / (dataset.lonCount - 1) * panelWidth;
             const selectedY = top + point.latIndex / (dataset.latCount - 1) * panelHeight;
             context.beginPath();
             context.moveTo(selectedX - 9, selectedY);
@@ -528,6 +537,24 @@ document.addEventListener("DOMContentLoaded", () => {
         return canvas.toDataURL("image/png");
     }
 
+    function centerLongitudeForDisplay(values, rows, columns) {
+        const centered = new Float32Array(values.length);
+        const half = Math.floor(columns / 2);
+        for (let row = 0; row < rows; row += 1) {
+            const rowOffset = row * columns;
+            for (let displayColumn = 0; displayColumn < columns; displayColumn += 1) {
+                const sourceColumn = (displayColumn + half) % columns;
+                centered[rowOffset + displayColumn] = values[rowOffset + sourceColumn];
+            }
+        }
+        return centered;
+    }
+
+    function longitudeIndexForDisplay(sourceIndex, columns) {
+        const half = Math.floor(columns / 2);
+        return (sourceIndex - half + columns) % columns;
+    }
+
     function renderSeaIceMaps(dataset, point) {
         const forecastMinusObservation = new Float32Array(dataset.mean.length);
         for (let index = 0; index < forecastMinusObservation.length; index += 1) {
@@ -539,10 +566,10 @@ document.addEventListener("DOMContentLoaded", () => {
             1
         );
         const panels = [
-            [dataset.mean, "C3S forecast (51-member mean)", 0, 100, false, "ice"],
-            [dataset.reanalysis, "ERA5 reanalysis", 0, 100, false, "ice"],
-            [dataset.observation, "OSI SAF satellite-derived CDR", 0, 100, false, "ice"],
-            [forecastMinusObservation, "Forecast − OSI SAF error", -errorLimit, errorLimit, true, "temperature"]
+            [centerLongitudeForDisplay(dataset.mean, dataset.latCount, dataset.lonCount), "C3S forecast (51-member mean)", 0, 100, false, "ice"],
+            [centerLongitudeForDisplay(dataset.reanalysis, dataset.latCount, dataset.lonCount), "ERA5 reanalysis", 0, 100, false, "ice"],
+            [centerLongitudeForDisplay(dataset.observation, dataset.latCount, dataset.lonCount), "OSI SAF satellite-derived CDR", 0, 100, false, "ice"],
+            [centerLongitudeForDisplay(forecastMinusObservation, dataset.latCount, dataset.lonCount), "Forecast − OSI SAF error", -errorLimit, errorLimit, true, "temperature"]
         ];
 
         const canvas = document.createElement("canvas");
@@ -577,7 +604,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             context.strokeStyle = "#84cc16";
             context.lineWidth = 3;
-            const selectedX = left + point.lonIndex / (dataset.lonCount - 1) * panelWidth;
+            const displayLonIndex = longitudeIndexForDisplay(point.lonIndex, dataset.lonCount);
+            const selectedX = left + displayLonIndex / (dataset.lonCount - 1) * panelWidth;
             const selectedY = top + point.latIndex / (dataset.latCount - 1) * panelHeight;
             context.beginPath();
             context.moveTo(selectedX - 9, selectedY);

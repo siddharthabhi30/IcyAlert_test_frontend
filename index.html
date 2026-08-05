@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IcyAlert Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=7">
+    <link rel="stylesheet" href="style.css?v=8">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -70,26 +70,6 @@
                 </select>
             </div>
 
-            <div class="control-group location-controls">
-                <h3>🌡️ Air-Temperature Location</h3>
-                <p class="control-help">Finds the nearest measured land station, then compares C3S and ERA5 at that station.</p>
-                <label>Latitude: <span id="temperature_lat_val">75.0</span></label>
-                <input type="range" id="temperature_lat" min="50" max="90" step="0.5" value="75">
-
-                <label>Longitude: <span id="temperature_lon_val">0.0</span></label>
-                <input type="range" id="temperature_lon" min="-180" max="180" step="0.5" value="0">
-            </div>
-
-            <div class="control-group location-controls">
-                <h3>🧊 Sea-Ice Grid Location</h3>
-                <p class="control-help">Selects the nearest C3S Arctic grid cell independently of the temperature station.</p>
-                <label>Latitude: <span id="sea_ice_lat_val">75.0</span></label>
-                <input type="range" id="sea_ice_lat" min="50" max="90" step="0.5" value="75">
-
-                <label>Longitude: <span id="sea_ice_lon_val">0.0</span></label>
-                <input type="range" id="sea_ice_lon" min="-180" max="180" step="0.5" value="0">
-            </div>
-
             <button id="fetch_btn" class="primary-btn">Fetch & Analyze</button>
             <p id="status_msg" class="status"></p>
         </aside>
@@ -111,12 +91,28 @@
                     <h3>🗺️ Seasonal Forecast, ERA5 Reanalysis and Error Map</h3>
                     <p class="map-explanation">
                         C3S is output from ECMWF's SEAS5 dynamical Earth-system forecast. ERA5 is the complete assimilated reanalysis. The map error is C3S minus ERA5.
-                        The pixel analysis below additionally shows the nearest real measured land-station observation.
+                        The selected grid cell moves linearly. Pixel Analysis additionally shows the nearest measured land-station observation and its distance.
                     </p>
                     <div class="img-container">
                         <img id="map_image" src="" style="display: none;" alt="Spatial Map">
                         <div id="map_placeholder" class="placeholder">
                             <p>Loading C3S, ERA5, and measured station observations for September 2020…</p>
+                        </div>
+                    </div>
+                    <div class="map-slider-panel" aria-label="Air-temperature grid location selector">
+                        <div class="map-slider-heading">
+                            <h4>🌡️ Air-Temperature Grid Location</h4>
+                            <p>Moves linearly across the displayed C3S/ERA5 grid. The station observation is selected separately by proximity.</p>
+                        </div>
+                        <div class="map-slider-grid">
+                            <label>
+                                Latitude: <strong id="temperature_lat_val">75.5</strong>
+                                <input type="range" id="temperature_lat" min="50.5" max="89.5" step="1" value="75.5">
+                            </label>
+                            <label>
+                                Longitude: <strong id="temperature_lon_val">0.5</strong>
+                                <input type="range" id="temperature_lon" min="-179.5" max="179.5" step="1" value="0.5">
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -142,7 +138,7 @@
                             <h2 id="metric_obs">--</h2>
                         </div>
                         <div class="metric-box">
-                            <p class="label">Forecast − Station Error</p>
+                            <p class="label">Forecast − Nearest Station</p>
                             <h2 id="metric_observation_error">--</h2>
                         </div>
                         <div class="metric-box">
@@ -159,7 +155,7 @@
                 <section class="card data-sources" aria-label="Dataset provenance">
                     <h3>🔗 Dataset provenance</h3>
                     <p class="source-explanation">
-                        The three maps above use only C3S and ERA5. The measured station dataset is used separately in Pixel Analysis for the nearest-station value and forecast–station error.
+                        The three maps above use only C3S and ERA5. The measured station dataset is used separately in Pixel Analysis for the nearest-station value and forecast–station difference; its distance from the selected grid cell is shown in the status line.
                     </p>
                     <div class="source-grid">
                         <a class="source-card" href="https://cds.climate.copernicus.eu/datasets/seasonal-monthly-single-levels?tab=overview" target="_blank" rel="noopener noreferrer">
@@ -195,6 +191,22 @@
                         <img id="sea_ice_map_image" src="" style="display: none;" alt="Sea-ice concentration maps">
                         <div id="sea_ice_map_placeholder" class="placeholder">
                             <p>Loading C3S, ERA5, and OSI SAF sea-ice concentration for September 2020…</p>
+                        </div>
+                    </div>
+                    <div class="map-slider-panel" aria-label="Sea-ice grid location selector">
+                        <div class="map-slider-heading">
+                            <h4>🧊 Sea-Ice Grid Location</h4>
+                            <p>Moves linearly across the displayed Arctic grid. The map edges meet at ±180°.</p>
+                        </div>
+                        <div class="map-slider-grid">
+                            <label>
+                                Latitude: <strong id="sea_ice_lat_val">75.5</strong>
+                                <input type="range" id="sea_ice_lat" min="50.5" max="89.5" step="1" value="75.5">
+                            </label>
+                            <label>
+                                Longitude: <strong id="sea_ice_lon_val">0.5</strong>
+                                <input type="range" id="sea_ice_lon" min="-179.5" max="179.5" step="1" value="0.5">
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -259,6 +271,6 @@
             </div>
         </main>
     </div>
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=11"></script>
 </body>
 </html>
